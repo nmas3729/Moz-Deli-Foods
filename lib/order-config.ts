@@ -24,8 +24,9 @@ export function getPayFastConfig() {
 }
 
 export async function getOrderReadiness() {
-  const [settings, availableProductCount] = await Promise.all([
+  const [settings, globalSetting, availableProductCount] = await Promise.all([
     prisma.restaurantSettings.findUnique({ where: { id: "default" } }),
+    prisma.setting.findUnique({ where: { id: "global" } }),
     prisma.menuProduct.count({
       where: { availability: true, deletedAt: null, priceCents: { gt: 0 } },
     }),
@@ -36,6 +37,7 @@ export async function getOrderReadiness() {
   const fulfillmentReady = Boolean(settings && (settings.collectionEnabled || settings.deliveryEnabled));
   const enabled = Boolean(
     settings?.onlineOrderingEnabled
+      && globalSetting?.canOrder
       && availableProductCount > 0
       && fulfillmentReady
       && payFastReady

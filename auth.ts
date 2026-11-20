@@ -22,7 +22,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
         const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-        const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+        const passwordHash = process.env.ADMIN_PASSWORD_HASH?.trim()
+          .replace(/\\+\$/g, "$")
+          .replace(/^(['"])(.*)\1$/, "$2");
         if (!parsed.success || !adminEmail || !passwordHash) return null;
         if (parsed.data.email.trim().toLowerCase() !== adminEmail) return null;
         if (!await compare(parsed.data.password, passwordHash)) return null;

@@ -175,13 +175,41 @@ try {
       },
       update: {},
     });
+
+    if (product.image) {
+      await prisma.menuProduct.updateMany({
+        where: {
+          id: product.id,
+          OR: [{ image: null }, { image: "" }],
+        },
+        data: {
+          image: product.image,
+          imageAlt: product.imageAlt,
+        },
+      });
+    }
   }
 
   await prisma.restaurantSettings.upsert({
     where: { id: "default" },
-    create: { id: "default" },
-    update: {},
+    create: {
+      id: "default",
+      onlineOrderingEnabled: true,
+      collectionEnabled: true,
+    },
+    update: {
+      onlineOrderingEnabled: true,
+      collectionEnabled: true,
+    },
   });
+
+  // Ensure ordering is enabled by default
+  await prisma.setting.upsert({
+    where: { id: 'global' },
+    update: { canOrder: true },
+    create: { id: 'global', canOrder: true },
+  });
+  console.log('✅ Success: Ordering setting enabled in database.');
 } finally {
   await prisma.$disconnect();
 }

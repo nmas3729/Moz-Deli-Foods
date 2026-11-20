@@ -35,6 +35,16 @@ The Stripe handler verifies each signature using `STRIPE_WEBHOOK_SECRET`, valida
 
 ## Ordering and deployment
 
+### Coolify deployment
+
+The `build` script generates Prisma Client, deploys migrations, seeds the menu and settings, and then builds Next.js:
+
+```bash
+prisma generate && prisma migrate deploy && node prisma/seed.mjs && next build
+```
+
+Set `DATABASE_URL`, `APP_BASE_URL`, `AUTH_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD_HASH` in Coolify. Generate `ADMIN_PASSWORD_HASH` with `npm run admin:password`. If the deployment platform preserves backslashes before `$` in the bcrypt hash, the application normalizes escaped dollar signs automatically.
+
 The ordering backend uses PostgreSQL, Prisma, Auth.js credentials for the single administrator, PayFast Onsite, and optional Resend email. The online ordering, menu availability, collection and delivery settings are all disabled by default. Keep them disabled until the restaurant owner approves the menu and operational details.
 
 The public storefront also provides a Stripe Checkout flow for the 13 menu items in `data/menu.ts`. The server sets item prices and metadata, and the signed Stripe webhook at `/api/webhooks/stripe` creates each successfully paid order in the shared admin dashboard. The customer return page independently verifies payment status. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_BASE_URL`, and `DATABASE_URL`; apply the Stripe order migration before accepting payments.

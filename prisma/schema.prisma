@@ -77,6 +77,11 @@ model RestaurantSettings {
   updatedAt                 DateTime @updatedAt
 }
 
+model Setting {
+  id       String  @id
+  canOrder Boolean @default(false)
+}
+
 model Order {
   id                 String                @id @default(cuid())
   orderNumber        String                @unique
