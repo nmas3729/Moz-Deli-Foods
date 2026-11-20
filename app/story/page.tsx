@@ -142,7 +142,10 @@ export default function StoryPage() {
           <Link href="/privacy">Privacy policy</Link>
           <Link href="/terms">Terms &amp; conditions</Link>
         </div>
-        <p className="premium-footer-bottom">© {business.legalName} · Daveyton, Gauteng</p>
+        <p className="premium-footer-bottom">
+          <span>© {business.legalName} · Daveyton, Gauteng</span>
+          <span>Design &amp; hosted by <a href="https://sihleb.co.za/" target="_blank" rel="noreferrer">SihleB Digital Studio</a></span>
+        </p>
       </footer>
     </main>
   );
