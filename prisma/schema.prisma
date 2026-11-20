@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FulfillmentMethod {
+  COLLECTION
+  DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  PAYFAST
+  STRIPE
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  CONFIRMED
+  PREPARING
+  READY_FOR_COLLECTION
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+model MenuProduct {
+  id           String      @id
+  name         String
+  description  String?
+  category     String
+  image        String?
+  imageAlt     String?
+  priceCents   Int?
+  availability Boolean     @default(false)
+  featured     Boolean     @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
+
+  @@index([availability, deletedAt])
+}
+
+model MenuImageAsset {
+  id          String   @id
+  contentType String
+  altText     String
+  data        Bytes
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model RestaurantSettings {
+  id                        String   @id @default("default")
+  onlineOrderingEnabled     Boolean  @default(false)
+  collectionEnabled         Boolean  @default(false)
+  deliveryEnabled           Boolean  @default(false)
+  deliveryFeeCents          Int?
+  minimumOrderCents         Int?
+  deliveryAreas             String[] @default([])
+  collectionEstimateMinutes Int?
+  updatedAt                 DateTime @updatedAt
+}
+
+model Order {
+  id                 String                @id @default(cuid())
+  orderNumber        String                @unique
+  publicToken        String                @unique
+  checkoutKey        String?               @unique
+  customerName       String
+  customerPhone      String
+  customerEmail      String?
+  fulfillment        FulfillmentMethod
+  deliveryAddress    String?
+  instructions       String?
+  subtotalCents      Int
+  deliveryFeeCents   Int
+  totalCents         Int
+  paymentMethod      PaymentMethod         @default(PAYFAST)
+  paymentStatus      PaymentStatus         @default(PENDING)
+  status             OrderStatus           @default(AWAITING_PAYMENT)
+  payfastUuid        String?               @unique
+  payfastPaymentId   String?               @unique
+  stripeSessionId    String?               @unique
+  paidAt             DateTime?
+  notificationSentAt DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  items              OrderItem[]
+  notifications      PaymentNotification[]
+
+  @@index([createdAt])
+  @@index([status, paymentStatus])
+}
+
+model OrderItem {
+  id              String       @id @default(cuid())
+  orderId         String
+  productId       String?
+  productName     String
+  category        String
+  quantity        Int
+  unitPriceCents  Int
+  totalPriceCents Int
+  customisations  Json?
+  order           Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         MenuProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model PaymentNotification {
+  id                String   @id @default(cuid())
+  orderId           String
+  providerPaymentId String   @unique
+  paymentStatus     String
+  amountCents       Int?
+  receivedAt        DateTime @default(now())
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, receivedAt])
+}
